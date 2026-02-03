@@ -1,0 +1,63 @@
+{
+    "title": "Job Aggregator Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "searchQueries": {
+            "title": "Search Queries",
+            "type": "array",
+            "description": "List of job search queries to scrape",
+            "editor": "stringList",
+            "default": [
+                "software engineer",
+                "data analyst"
+            ]
+        },
+        "location": {
+            "title": "Location",
+            "type": "string",
+            "description": "Location to search for jobs",
+            "default": "New York, NY"
+        },
+        "maxResults": {
+            "title": "Max Results",
+            "type": "integer",
+            "description": "Maximum number of results per query",
+            "default": 100,
+            "minimum": 1,
+            "maximum": 500
+        },
+        "rateLimitRpm": {
+            "title": "Rate Limit (RPM)",
+            "type": "integer",
+            "description": "Requests per minute to avoid rate limiting",
+            "default": 30,
+            "minimum": 1,
+            "maximum": 60
+        },
+        "sources": {
+            "title": "Job Sources",
+            "type": "array",
+            "description": "Which job boards to scrape",
+            "editor": "select",
+            "default": [
+                "google",
+                "indeed"
+            ],
+            "enum": [
+                "google",
+                "indeed"
+            ]
+        },
+        "proxy": {
+            "title": "Use Proxy",
+            "type": "boolean",
+            "description": "Enable Apify proxy for CAPTCHA avoidance",
+            "default": true
+        }
+    },
+    "required": [
+        "searchQueries",
+        "location"
+    ]
+}
