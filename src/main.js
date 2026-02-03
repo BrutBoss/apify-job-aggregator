@@ -7,30 +7,53 @@ import { REQUIRED_FIELDS } from './config.js';
 
 await Actor.init();
 
-const input = await Actor.getInput();
+const input = await Actor.getInput() || {};
 const dataset = await Actor.openDataset();
 
+// Log raw input for debugging
+log.info('Raw input received', { input });
+
 const {
-    searchQueries = [],
-    location,
+    searchQueries = ['software engineer', 'data analyst'],
+    location = 'New York, NY',
     maxResults = 100,
     rateLimitRpm = 30,
-    sources = ['google', 'indeed']
+    sources = ['google', 'indeed'],
+    proxy = true
 } = input;
+
+// Normalize sources to array of lowercase strings
+const normalizedSources = Array.isArray(sources)
+    ? sources.map(s => String(s).toLowerCase().trim())
+    : ['google', 'indeed'];
+
+log.info('Configuration', {
+    searchQueries,
+    location,
+    maxResults,
+    sources: normalizedSources,
+    proxy
+});
 
 // Configure proxy if enabled
 let proxyConfiguration = null;
-if (input.proxy) {
-    proxyConfiguration = await Actor.createProxyConfiguration({
-        groups: ['RESIDENTIAL'],  // Use residential proxies for better success
-    });
-    log.info('Proxy enabled with residential IPs');
+if (proxy) {
+    try {
+        proxyConfiguration = await Actor.createProxyConfiguration({
+            groups: ['RESIDENTIAL'],
+        });
+        log.info('Proxy enabled with residential IPs');
+    } catch (e) {
+        log.warning('Failed to create proxy configuration, continuing without proxy', { error: e.message });
+    }
 }
 
 const seen = new Set();
 const stats = { saved: 0, duplicates: 0, errors: 0, captchas: 0 };
 
 for (const query of searchQueries) {
+    log.info(`Processing query: "${query}"`);
+
     // Get proxy URL for this request
     const proxyUrl = proxyConfiguration
         ? await proxyConfiguration.newUrl()
@@ -55,31 +78,38 @@ for (const query of searchQueries) {
         let jobs = [];
 
         // Try Google Jobs
-        if (sources.includes('google')) {
+        if (normalizedSources.includes('google')) {
             log.info(`Scraping Google Jobs for: ${query}`);
             try {
                 const googleJobs = await scrapeGoogleJobs({ page, query, location, maxResults, rpm: rateLimitRpm });
+                log.info(`Google Jobs found: ${googleJobs.length}`);
                 jobs.push(...googleJobs);
             } catch (e) {
                 if (e.message.includes('CAPTCHA')) {
                     stats.captchas++;
                     log.warning(`CAPTCHA on Google for "${query}" - skipping to next source`);
                 } else {
-                    throw e;
+                    log.error(`Google scraping error: ${e.message}`);
+                    stats.errors++;
                 }
             }
+        } else {
+            log.info('Google source not enabled');
         }
 
-        // Try Indeed (usually more permissive)
-        if (sources.includes('indeed')) {
+        // Try Indeed
+        if (normalizedSources.includes('indeed')) {
             log.info(`Scraping Indeed for: ${query}`);
             try {
                 const indeedJobs = await scrapeIndeed({ page, query, location, maxResults });
+                log.info(`Indeed jobs found: ${indeedJobs.length}`);
                 jobs.push(...indeedJobs);
             } catch (e) {
                 log.warning(`Indeed scraping failed: ${e.message}`);
                 stats.errors++;
             }
+        } else {
+            log.info('Indeed source not enabled');
         }
 
         // Process and deduplicate jobs
