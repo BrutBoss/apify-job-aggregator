@@ -17,12 +17,14 @@
             "title": "Location",
             "type": "string",
             "description": "Location to search for jobs",
+            "editor": "textfield",
             "default": "New York, NY"
         },
         "maxResults": {
             "title": "Max Results",
             "type": "integer",
             "description": "Maximum number of results per query",
+            "editor": "number",
             "default": 100,
             "minimum": 1,
             "maximum": 500
@@ -31,6 +33,7 @@
             "title": "Rate Limit (RPM)",
             "type": "integer",
             "description": "Requests per minute to avoid rate limiting",
+            "editor": "number",
             "default": 30,
             "minimum": 1,
             "maximum": 60
@@ -53,6 +56,7 @@
             "title": "Use Proxy",
             "type": "boolean",
             "description": "Enable Apify proxy for CAPTCHA avoidance",
+            "editor": "checkbox",
             "default": true
         }
     },
