@@ -42,12 +42,12 @@
             "title": "Job Sources",
             "type": "array",
             "description": "Which job boards to scrape",
-            "editor": "select",
+            "editor": "stringList",
             "default": [
                 "google",
                 "indeed"
             ],
-            "enum": [
+            "prefill": [
                 "google",
                 "indeed"
             ]
